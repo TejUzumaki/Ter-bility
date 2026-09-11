@@ -1,30 +1,64 @@
 package com.blueboss.terbility
 
+import android.content.Context
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 
-class TerminalExec(private val baseDir: File) {
+class TerminalExec(private val context: Context, private val baseDir: File) {
     var currentDir: File = baseDir
+    private val busyboxBin = File(baseDir, "busybox")
+
+    init {
+        setupBusybox()
+    }
+
+    private fun setupBusybox() {
+        if (!busyboxBin.exists()) {
+            try {
+                // Copy raw binary from assets to private storage
+                context.assets.open("busybox").use { input ->
+                    busyboxBin.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                // Set executable permission
+                busyboxBin.setExecutable(true)
+                // Install all command symlinks (ls, tree, vi, etc.) into our baseDir
+                val installProcess = ProcessBuilder(busyboxBin.absolutePath, "--install", "-s", baseDir.absolutePath)
+                installProcess.directory(baseDir)
+                installProcess.start().waitFor()
+            } catch (e: Exception) {
+                // Ignore if it fails, app will just fallback to system commands
+            }
+        }
+    }
 
     fun execute(command: String): String {
         val trimmedCmd = command.trim()
         if (trimmedCmd.isEmpty()) return ""
 
-        // Manually handle 'cd' because each ProcessBuilder is stateless
         if (trimmedCmd == "cd" || trimmedCmd.startsWith("cd ")) {
             val targetArg = if (trimmedCmd == "cd") "" else trimmedCmd.removePrefix("cd ").trim()
-            val newDir = when {
-                targetArg.isEmpty() || targetArg == "~" -> baseDir
-                targetArg.startsWith("/") -> File(targetArg)
-                else -> File(currentDir, targetArg)
+            
+            // Calculate the target path
+            val targetPath = when {
+                targetArg.isEmpty() || targetArg == "~" -> baseDir.absolutePath
+                targetArg.startsWith("/") -> targetArg
+                else -> File(currentDir, targetArg).absolutePath
             }
             
-            return if (newDir.isDirectory) {
-                currentDir = newDir
-                "" // Success: No output
-            } else {
-                "cd: no such file or directory: $targetArg\n"
+            return try {
+                // canonicalFile automatically resolves '.' and '..' mathematically
+                val newDir = File(targetPath).canonicalFile
+                if (newDir.isDirectory) {
+                    currentDir = newDir
+                    "" // Success: No output
+                } else {
+                    "cd: no such file or directory: $targetArg\n"
+                }
+            } catch (e: Exception) {
+                "cd: error: ${e.message}\n"
             }
         }
 
@@ -36,6 +70,8 @@ class TerminalExec(private val baseDir: File) {
             val env = processBuilder.environment()
             env["HOME"] = baseDir.absolutePath
             env["PWD"] = currentDir.absolutePath
+            // Prepend our Busybox directory to PATH so our commands are found first
+            env["PATH"] = baseDir.absolutePath + ":" + (env["PATH"] ?: "/system/bin")
 
             val process = processBuilder.start()
             val reader = BufferedReader(InputStreamReader(process.inputStream))
@@ -51,7 +87,6 @@ class TerminalExec(private val baseDir: File) {
         }
     }
 
-    // Generate the prompt string with Rupee sign
     fun getPromptPath(): String {
         val basePath = baseDir.absolutePath
         var path = currentDir.absolutePath
