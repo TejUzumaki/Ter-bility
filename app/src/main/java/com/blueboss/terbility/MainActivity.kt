@@ -2,16 +2,13 @@ package com.blueboss.terbility
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Html
-import android.text.Spannable
-import android.text.method.LinkMovementMethod
-import android.text.method.ScrollingMovementMethod
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -26,12 +23,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var promptText: TextView
     private lateinit var terminalExec: TerminalExec
-    private lateinit var sessionListLayout: LinearLayout
+    private lateinit var sessionListLayout: android.widget.LinearLayout
+    private lateinit var mainLayout: android.widget.LinearLayout
+    private lateinit var extraKeysBar: android.widget.LinearLayout
 
     private var historyIndex = -1
     private var accentColor = "#FF1493"
+    private var isDarkMode = true
 
-    // Data class to hold session states
     data class Session(var exec: TerminalExec, var output: StringBuilder)
     private val sessions = mutableListOf<Session>()
     private var activeSession = 0
@@ -46,22 +45,18 @@ class MainActivity : AppCompatActivity() {
         scrollView = findViewById(R.id.scrollView)
         promptText = findViewById(R.id.promptText)
         sessionListLayout = findViewById(R.id.session_list)
+        mainLayout = findViewById(R.id.main_layout)
+        extraKeysBar = findViewById(R.id.extra_keys_bar)
 
-        // Enable text selection
         terminalOutput.setTextIsSelectable(true)
 
-        loadAccentColor()
+        loadSettings()
         setupSidebar()
 
-        // Initialize first session
-        if (sessions.isEmpty()) {
-            createNewSession()
-        } else {
-            switchToSession(0)
-        }
+        if (sessions.isEmpty()) createNewSession() else switchToSession(0)
 
         commandInput.requestFocus()
-        
+
         commandInput.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_DONE || 
                 (event != null && event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_ENTER)) {
@@ -73,10 +68,27 @@ class MainActivity : AppCompatActivity() {
         setupExtraKeys()
     }
 
-    private fun loadAccentColor() {
+    private fun loadSettings() {
         val prefs = getSharedPreferences("TerbilityPrefs", Context.MODE_PRIVATE)
         accentColor = prefs.getString("accent_color", "#FF1493") ?: "#FF1493"
-        promptText.setTextColor(android.graphics.Color.parseColor(accentColor))
+        isDarkMode = prefs.getString("theme_mode", "dark") == "dark"
+
+        // Apply Theme Colors
+        if (isDarkMode) {
+            mainLayout.setBackgroundColor(Color.BLACK)
+            terminalOutput.setTextColor(Color.WHITE)
+            commandInput.setTextColor(Color.WHITE)
+            extraKeysBar.setBackgroundColor(Color.parseColor("#111111"))
+            // Custom pink highlight for text selection
+            terminalOutput.highlightColor = Color.parseColor("#55FF1493")
+        } else {
+            mainLayout.setBackgroundColor(Color.WHITE)
+            terminalOutput.setTextColor(Color.BLACK)
+            commandInput.setTextColor(Color.BLACK)
+            extraKeysBar.setBackgroundColor(Color.parseColor("#EEEEEE"))
+            terminalOutput.highlightColor = Color.parseColor("#55FF1493")
+        }
+        promptText.setTextColor(Color.parseColor(accentColor))
     }
 
     private fun setupSidebar() {
@@ -94,15 +106,19 @@ class MainActivity : AppCompatActivity() {
         val newExec = TerminalExec(filesDir)
         val newOutput = StringBuilder()
         
-        // ASCII Art Welcome
-        val asciiArt = "████████╗██████╗░░█████╗░██╗░░██╗███████╗███╗░░██╗<br>" +
-                       "╚══██╔══╝██╔══██╗██╔══██╗██║░░██║██╔════╝████╗░██║<br>" +
-                       "░░░██║░░░██████╔╝███████║███████║█████╗░░██╔██╗██║<br>" +
-                       "░░░██║░░░██╔══██╗██╔══██║██╔══██║██╔══╝░░██║╚████║<br>" +
-                       "░░░██║░░░██║░░██║██║░░██║██║░░██║███████╗██║░╚██╔╝<br>" +
-                       "░░░╚═╝░░░╚═╝░░╚═╝╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝<br>"
+        val asciiArt = "████████╗███████╗██████╗░     ██████╗░██╗██╗░░░░░██╗████████╗██╗░░░██╗<br>" +
+                       "╚══██╔══╝██╔════╝██╔══██╗     ██╔══██╗██║██║░░░░░██║╚══██╔══╝╚██╗░██╔╝<br>" +
+                       "░░░██║░░░█████╗░░██████╔╝     ██████╔╝██║██║░░░░░██║░░░██║░░░░╚████╔╝░<br>" +
+                       "░░░██║░░░██╔══╝░░██╔══██╗     ██╔══██╗██║██║░░░░░██║░░░██║░░░░░╚██╔╝░░<br>" +
+                       "░░░██║░░░███████╗██║░░██║     ██████╔╝██║███████╗██║░░░██║░░░░░░██║░░░<br>" +
+                       "░░░╚═╝░░░╚══════╝╚═╝░░╚═╝     ╚═════╝░╚═╝╚══════╝╚═╝░░░╚═╝░░░░░░╚═╝░░░<br>"
+        
+        val textColor = if (isDarkMode) "#FFFFFF" else "#000000"
+        val bgColor = if (isDarkMode) "#000000" else "#FFFFFF"
+        
+        newOutput.append("<font color='$bgColor'>$asciiArt</font>") // Hack to keep spacing intact
         newOutput.append("<font color='$accentColor'>$asciiArt</font><br>")
-        newOutput.append("<font color='#FFFFFF'>Welcome to Ter-bility a terminal made for challenge by Arpit Falke</font><br><br>")
+        newOutput.append("<font color='$textColor'>Welcome to Ter-bility a terminal made for challenge by Arpit Falke</font><br><br>")
 
         sessions.add(Session(newExec, newOutput))
         activeSession = sessions.size - 1
@@ -112,7 +128,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun switchToSession(index: Int) {
         activeSession = index
-        terminalExec = sessions[index].exec
         renderTerminal()
     }
 
@@ -122,7 +137,7 @@ class MainActivity : AppCompatActivity() {
             val btn = Button(this)
             btn.text = "Session ${i + 1}"
             btn.setBackgroundColor(0x00000000)
-            btn.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
+            btn.setTextColor(Color.parseColor("#FFFFFF"))
             btn.setOnClickListener {
                 switchToSession(i)
                 drawerLayout.closeDrawer(GravityCompat.START)
@@ -144,15 +159,16 @@ class MainActivity : AppCompatActivity() {
         
         val escapedCmd = command.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         val prompt = terminalExec.getPromptPath()
+        val textColor = if (isDarkMode) "#FFFFFF" else "#000000"
 
-        sessions[activeSession].output.append("<font color='$accentColor'>$prompt</font><font color='#FFFFFF'>$escapedCmd</font><br>")
+        sessions[activeSession].output.append("<font color='$accentColor'>$prompt</font><font color='$textColor'>$escapedCmd</font><br>")
 
         val output = terminalExec.execute(command)
         if (output == "___CLEAR___") {
             sessions[activeSession].output.clear()
         } else if (output.isNotEmpty()) {
             val escapedOut = output.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
-            sessions[activeSession].output.append("<font color='#FFFFFF'>$escapedOut</font>")
+            sessions[activeSession].output.append("<font color='$textColor'>$escapedOut</font>")
         }
 
         commandInput.text.clear()
@@ -162,6 +178,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupExtraKeys() {
         findViewById<Button>(R.id.btn_esc).setOnClickListener { injectText("") }
         findViewById<Button>(R.id.btn_tab).setOnClickListener { injectText("    ") }
+        findViewById<Button>(R.id.btn_ctrl).setOnClickListener { 
+            // CTRL logic placeholder: usually sends signal to process. 
+            // Since we use ProcessBuilder per command, this mainly affects text editing.
+        }
+        findViewById<Button>(R.id.btn_alt).setOnClickListener { }
         findViewById<Button>(R.id.btn_up).setOnClickListener {
             if (terminalExec.history.isNotEmpty()) {
                 if (historyIndex == -1) historyIndex = terminalExec.history.size - 1
@@ -180,6 +201,16 @@ class MainActivity : AppCompatActivity() {
                 commandInput.text.clear()
             }
         }
+        findViewById<Button>(R.id.btn_left).setOnClickListener {
+            val pos = commandInput.selectionStart
+            if (pos > 0) commandInput.setSelection(pos - 1)
+        }
+        findViewById<Button>(R.id.btn_right).setOnClickListener {
+            val pos = commandInput.selectionStart
+            if (pos < commandInput.text.length) commandInput.setSelection(pos + 1)
+        }
+        findViewById<Button>(R.id.btn_home).setOnClickListener { commandInput.setSelection(0) }
+        findViewById<Button>(R.id.btn_end).setOnClickListener { commandInput.setSelection(commandInput.text.length) }
         findViewById<Button>(R.id.btn_slash).setOnClickListener { injectText("/") }
         findViewById<Button>(R.id.btn_pipe).setOnClickListener { injectText("| ") }
     }
@@ -193,7 +224,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        loadAccentColor() // Reload color if changed in settings
+        loadSettings() 
         renderTerminal()
     }
 }

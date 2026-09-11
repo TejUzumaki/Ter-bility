@@ -32,5 +32,14 @@ class SettingsActivity : AppCompatActivity() {
             prefs.edit().putString("accent_color", "#BF40BF").apply()
             finish()
         }
+
+        findViewById<Button>(R.id.theme_dark).setOnClickListener {
+            prefs.edit().putString("theme_mode", "dark").apply()
+            finish()
+        }
+        findViewById<Button>(R.id.theme_light).setOnClickListener {
+            prefs.edit().putString("theme_mode", "light").apply()
+            finish()
+        }
     }
 }
