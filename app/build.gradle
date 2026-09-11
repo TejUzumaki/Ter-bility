@@ -11,7 +11,8 @@ android {
         applicationId "com.blueboss.terbility"
         minSdk 24
         targetSdk 34
-        versionCode 1
+        // Auto-increment version code using GitHub Actions run number
+        versionCode System.getenv('GITHUB_RUN_NUMBER') ? System.getenv('GITHUB_RUN_NUMBER').toInteger() : 1
         versionName "1.0"
     }
 

@@ -1,49 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#000000">
 
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/bottomBar">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <TextView
             android:id="@+id/terminalOutput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:padding="8dp"
-            android:textColor="#00FF00"
+            android:padding="16dp"
+            android:textColor="#FFFFFF"
             android:textSize="14sp" />
     </ScrollView>
 
+    <!-- Sharp 1px separator line -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333333" />
+
     <LinearLayout
-        android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:orientation="horizontal"
-        android:background="#111111">
+        android:background="#0A0A0A"
+        android:padding="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=">"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:textSize="16sp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"/>
 
         <EditText
             android:id="@+id/commandInput"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Enter command..."
+            android:hint="Enter command"
             android:textColor="#FFFFFF"
-            android:textColorHint="#888888"
+            android:textColorHint="#555555"
+            android:background="@null"
+            android:fontFamily="monospace"
             android:inputType="text"
             android:imeOptions="actionSend"
-            android:singleLine="true" />
+            android:singleLine="true"
+            android:textSize="16sp" />
 
         <Button
             android:id="@+id/sendButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Run" />
+            android:text="EXEC"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textStyle="bold"
+            android:fontFamily="monospace"/>
     </LinearLayout>
-</RelativeLayout>
+</LinearLayout>

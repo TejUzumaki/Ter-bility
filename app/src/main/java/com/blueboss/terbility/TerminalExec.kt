@@ -2,7 +2,6 @@ package com.blueboss.terbility
 
 import java.io.BufferedReader
 import java.io.File
-import java.io.IOException
 import java.io.InputStreamReader
 
 class TerminalExec(private val workingDir: File) {
@@ -12,10 +11,10 @@ class TerminalExec(private val workingDir: File) {
             val processBuilder = ProcessBuilder("/system/bin/sh", "-c", command)
             processBuilder.redirectErrorStream(true)
             
-            // Force the shell to start inside Ter-bility's private app directory
+            // Safely set the directory to Ter-bility's private storage
             processBuilder.directory(workingDir)
             
-            // Set HOME andPWD environment variables so commands know where they are
+            // Set HOME and PWD environment variables
             val env = processBuilder.environment()
             env["HOME"] = workingDir.absolutePath
             env["PWD"] = workingDir.absolutePath
@@ -30,10 +29,8 @@ class TerminalExec(private val workingDir: File) {
             }
             process.waitFor()
             output.toString()
-        } catch (e: IOException) {
-            "Error executing command: ${e.message}\n"
-        } catch (e: InterruptedException) {
-            "Execution interrupted: ${e.message}\n"
+        } catch (e: Exception) {
+            "Error: ${e.message}\n"
         }
     }
 }
