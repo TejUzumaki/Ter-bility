@@ -1,62 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#000000">
+    android:background="#000000"
+    android:fillViewport="true"
+    android:clickable="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
-    <ScrollView
-        android:id="@+id/scrollView"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
 
         <TextView
             android:id="@+id/terminalOutput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:padding="12dp"
             android:textColor="#FFFFFF"
             android:textSize="14sp" />
-    </ScrollView>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#333333" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#0A0A0A"
-        android:padding="8dp">
-
-        <TextView
-            android:id="@+id/promptText"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FF1493"
-            android:fontFamily="monospace"
-            android:textSize="14sp"
-            android:layout_gravity="center_vertical" />
+            android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/commandInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@null"
-            android:fontFamily="monospace"
-            android:textColor="#FFFFFF"
-            android:hint=""
-            android:inputType="text"
-            android:imeOptions="actionDone"
-            android:singleLine="true"
-            android:textSize="14sp"
-            android:textCursorDrawable="@drawable/cursor_white"
-            android:cursorVisible="true" />
+            <TextView
+                android:id="@+id/promptText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FF1493"
+                android:fontFamily="monospace"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/commandInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:fontFamily="monospace"
+                android:textColor="#FFFFFF"
+                android:inputType="text"
+                android:imeOptions="actionDone"
+                android:singleLine="true"
+                android:textSize="14sp"
+                android:textCursorDrawable="@drawable/cursor_white"
+                android:cursorVisible="true" />
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</ScrollView>

@@ -31,6 +31,9 @@ class MainActivity : AppCompatActivity() {
         printToTerminal("Ter-bility [Version 1.0]\n(c) Blue Boss. All rights reserved.\n\n")
         updatePrompt()
 
+        // Force keyboard to show and focus on the inline input
+        commandInput.requestFocus()
+        
         commandInput.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_DONE || 
                 (event != null && event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_ENTER)) {
@@ -48,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         val escapedCmd = command.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         val prompt = terminalExec.getPromptPath()
 
+        // Print the executed command into the main terminal buffer
         printToTerminal("<font color='#FF1493'>$prompt</font><font color='#FFFFFF'>$escapedCmd</font><br>")
 
         val output = terminalExec.execute(command)
@@ -61,7 +65,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatePrompt() {
-        // Update the standalone TextView, so it never disappears
         promptText.text = terminalExec.getPromptPath()
     }
 
