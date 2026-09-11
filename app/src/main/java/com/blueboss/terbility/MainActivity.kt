@@ -4,10 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.text.Editable
 import android.text.Html
-import android.text.TextWatcher
-import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
@@ -68,15 +65,6 @@ class MainActivity : AppCompatActivity() {
             } else false
         }
 
-        // Auto-scroll when user types long commands
-        commandInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
-            }
-        })
-
         setupExtraKeys()
     }
 
@@ -113,7 +101,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun createNewSession() {
-        val newExec = TerminalExec(filesDir)
+        val newExec = TerminalExec(this, filesDir)
         val newOutput = StringBuilder()
         
         val asciiArt = "████████╗███████╗██████╗░     ██████╗░██╗██╗░░░░░██╗████████╗██╗░░░██╗<br>" +
@@ -161,9 +149,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executeCommand() {
-        // Haptic feedback on enter
-        commandInput.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-        
         val command = commandInput.text.toString()
         historyIndex = -1
         
@@ -194,7 +179,6 @@ class MainActivity : AppCompatActivity() {
         
         buttons.forEach { id ->
             findViewById<Button>(id).setOnClickListener { 
-                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 when (id) {
                     R.id.btn_esc -> injectText("")
                     R.id.btn_tab -> injectText("    ")

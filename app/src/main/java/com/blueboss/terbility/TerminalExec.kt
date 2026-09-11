@@ -1,8 +1,14 @@
 package com.blueboss.terbility
 
+import android.content.Context
+import android.os.Build
+import android.os.StatFs
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class TerminalExec(private val baseDir: File) {
+class TerminalExec(private val context: Context, private val baseDir: File) {
     var currentDir: File = baseDir
     val history = mutableListOf<String>()
 
@@ -10,7 +16,6 @@ class TerminalExec(private val baseDir: File) {
         var trimmedCmd = command.trim()
         if (trimmedCmd.isEmpty()) return ""
         
-        // Auto-correct cd.. to cd ..
         if (trimmedCmd == "cd..") trimmedCmd = "cd .."
         
         history.add(trimmedCmd)
@@ -30,8 +35,14 @@ class TerminalExec(private val baseDir: File) {
             "cp" -> handleCp(args)
             "echo" -> args + "\n"
             "clear" -> "___CLEAR___"
-            "help" -> "Available commands: cd, ls, pwd, mkdir, rm, touch, cat, mv, cp, echo, tree, clear, help\n"
+            "ter-help" -> getHelpMenu()
+            "help" -> getHelpMenu()
             "tree" -> handleTree(currentDir, "")
+            "whoami" -> "ter-bility-user\n"
+            "date" -> SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.getDefault()).format(Date()) + "\n"
+            "history" -> getHistory()
+            "neofetch" -> getNeofetch()
+            "df" -> getDiskInfo()
             else -> try {
                 val pb = ProcessBuilder("/system/bin/sh", "-c", trimmedCmd)
                 pb.directory(currentDir)
@@ -42,6 +53,72 @@ class TerminalExec(private val baseDir: File) {
                 "${cmdName}: not found or permission denied\n"
             }
         }
+    }
+
+    private fun getHelpMenu(): String {
+        return """
+┌──────────────────────────────────────────────────────────────┐
+│ TER-BILITY NATIVE COMMANDS                                   │
+├──────────────────────────────────────────────────────────────┤
+│ FILE & DIRECTORY                                             │
+│   ls [dir]      - List directory contents                    │
+│   cd [dir]      - Change directory (supports .. and ~)       │
+│   pwd           - Print working directory                    │
+│   mkdir [dir]   - Create directory                           │
+│   rm [file]     - Remove file/directory                      │
+│   touch [file]  - Create empty file                          │
+│   cat [file]    - Print file contents                        │
+│   mv [s] [d]    - Move/rename file                           │
+│   cp [s] [d]    - Copy file                                  │
+│   tree          - Display directory tree structure           │
+├──────────────────────────────────────────────────────────────┤
+│ SYSTEM & TERMINAL                                            │
+│   ter-help      - Show this help menu                        │
+│   clear         - Clear the terminal screen                  │
+│   history       - Show command history                       │
+│   whoami        - Print current user                         │
+│   date          - Print current system date/time             │
+│   neofetch      - Display system information & logo          │
+│   df            - Show disk space information                │
+└──────────────────────────────────────────────────────────────┘
+""".trimIndent() + "\n"
+    }
+
+    private fun getHistory(): String {
+        val sb = StringBuilder()
+        history.forEachIndexed { index, cmd -> sb.append("${index + 1}  $cmd\n") }
+        return sb.toString()
+    }
+
+    private fun getNeofetch(): String {
+        val model = "${Build.MANUFACTURER} ${Build.MODEL}"
+        val androidVer = Build.VERSION.RELEASE
+        val sdk = Build.VERSION.SDK_INT
+        val arch = Build.SUPPORTED_ABIS[0]
+        
+        return """
+<font color='#FF1493'>████████╗███████╗██████╗░     ██████╗░██╗██╗░░░░░██╗████████╗██╗░░░██╗</font>
+<font color='#FF1493'>╚══██╔══╝██╔════╝██╔══██╗     ██╔══██╗██║██║░░░░░██║╚══██╔══╝╚██╗░██╔╝</font>
+<font color='#FF1493'>░░░██║░░░█████╗░░██████╔╝     ██████╔╝██║██║░░░░░██║░░░██║░░░░╚████╔╝░</font>
+<font color='#FF1493'>░░░██║░░░██╔══╝░░██╔══██╗     ██╔══██╗██║██║░░░░░██║░░░██║░░░░░╚██╔╝░░</font>
+<font color='#FF1493'>░░░██║░░░███████╗██║░░██║     ██████╔╝██║███████╗██║░░░██║░░░░░░██║░░░</font>
+<font color='#FF1493'>░░░╚═╝░░░╚══════╝╚═╝░░╚═╝     ╚═════╝░╚═╝╚══════╝╚═╝░░░╚═╝░░░░░░╚═╝░░░</font>
+
+   <font color='#FFFFFF'>OS:</font> Ter-bility V2.1 (Android $androidVer)
+   <font color='#FFFFFF'>Host:</font> $model
+   <font color='#FFFFFF'>Kernel:</font> 4.x.x (SDK $sdk)
+   <font color='#FFFFFF'>Arch:</font> $arch
+   <font color='#FFFFFF'>Shell:</font> /system/bin/sh
+   <font color='#FFFFFF'>User:</font> ter-bility-user
+""".trimIndent() + "\n"
+    }
+
+    private fun getDiskInfo(): String {
+        val stat = StatFs(baseDir.absolutePath)
+        val total = stat.totalBytes / (1024 * 1024)
+        val avail = stat.availableBytes / (1024 * 1024)
+        return "Filesystem            1M-blocks   Used Available Use% Mounted on\n" +
+               "/data/data/com.blueboss.terbility  $total       ${total - avail}       $avail   ${((total-avail)*100/total)}%   /data\n"
     }
 
     private fun handleCd(args: String): String {
