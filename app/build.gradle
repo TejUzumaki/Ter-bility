@@ -11,7 +11,6 @@ android {
         applicationId "com.blueboss.terbility"
         minSdk 24
         targetSdk 34
-        // Auto-increment version code using GitHub Actions run number
         versionCode System.getenv('GITHUB_RUN_NUMBER') ? System.getenv('GITHUB_RUN_NUMBER').toInteger() : 1
         versionName "1.0"
     }
@@ -34,4 +33,5 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
+    implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
 }

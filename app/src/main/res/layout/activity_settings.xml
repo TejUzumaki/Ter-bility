@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Prompt Color"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
+
+    <Button
+        android:id="@+id/color_pink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Deep Pink (Default)"
+        android:textColor="#FF1493" />
+
+    <Button
+        android:id="@+id/color_green"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Retro Green"
+        android:textColor="#00FF00" />
+
+    <Button
+        android:id="@+id/color_cyan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cyber Cyan"
+        android:textColor="#00FFFF" />
+
+    <Button
+        android:id="@+id/color_orange"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Alert Orange"
+        android:textColor="#FFA500" />
+
+    <Button
+        android:id="@+id/color_purple"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Royal Purple"
+        android:textColor="#BF40BF" />
+</LinearLayout>

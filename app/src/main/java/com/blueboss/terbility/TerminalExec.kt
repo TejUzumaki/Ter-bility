@@ -7,8 +7,11 @@ class TerminalExec(private val baseDir: File) {
     val history = mutableListOf<String>()
 
     fun execute(command: String): String {
-        val trimmedCmd = command.trim()
+        var trimmedCmd = command.trim()
         if (trimmedCmd.isEmpty()) return ""
+        
+        // Auto-correct cd.. to cd ..
+        if (trimmedCmd == "cd..") trimmedCmd = "cd .."
         
         history.add(trimmedCmd)
         val parts = trimmedCmd.split(" ", limit = 2)
@@ -21,9 +24,13 @@ class TerminalExec(private val baseDir: File) {
             "ls" -> handleLs(args)
             "mkdir" -> handleMkdir(args)
             "rm" -> handleRm(args)
+            "touch" -> handleTouch(args)
+            "cat" -> handleCat(args)
+            "mv" -> handleMv(args)
+            "cp" -> handleCp(args)
             "echo" -> args + "\n"
             "clear" -> "___CLEAR___"
-            "help" -> "Available commands: cd, ls, pwd, mkdir, rm, echo, tree, clear, help\n"
+            "help" -> "Available commands: cd, ls, pwd, mkdir, rm, touch, cat, mv, cp, echo, tree, clear, help\n"
             "tree" -> handleTree(currentDir, "")
             else -> try {
                 val pb = ProcessBuilder("/system/bin/sh", "-c", trimmedCmd)
@@ -46,15 +53,9 @@ class TerminalExec(private val baseDir: File) {
         }
         return try {
             val newDir = File(targetPath).canonicalFile
-            if (newDir.isDirectory) {
-                currentDir = newDir
-                ""
-            } else {
-                "cd: no such file or directory: $targetArg\n"
-            }
-        } catch (e: Exception) {
-            "cd: error: ${e.message}\n"
-        }
+            if (newDir.isDirectory) { currentDir = newDir; "" }
+            else "cd: no such file or directory: $targetArg\n"
+        } catch (e: Exception) { "cd: error: ${e.message}\n" }
     }
 
     private fun handleLs(args: String): String {
@@ -71,7 +72,35 @@ class TerminalExec(private val baseDir: File) {
     private fun handleRm(args: String): String {
         if (args.isEmpty()) return "rm: missing operand\n"
         val file = File(currentDir, args)
-        return if (file.delete()) "" else "rm: cannot remove '$args'\n"
+        return if (file.deleteRecursively()) "" else "rm: cannot remove '$args'\n"
+    }
+
+    private fun handleTouch(args: String): String {
+        if (args.isEmpty()) return "touch: missing operand\n"
+        File(currentDir, args).createNewFile()
+        return ""
+    }
+
+    private fun handleCat(args: String): String {
+        if (args.isEmpty()) return "cat: missing operand\n"
+        val file = File(currentDir, args)
+        return if (file.exists()) file.readText() + "\n" else "cat: $args: no such file or directory\n"
+    }
+
+    private fun handleMv(args: String): String {
+        val parts = args.split(" ", limit = 2)
+        if (parts.size < 2) return "mv: missing destination\n"
+        val src = File(currentDir, parts[0])
+        val dst = File(currentDir, parts[1])
+        return if (src.renameTo(dst)) "" else "mv: failed to move\n"
+    }
+
+    private fun handleCp(args: String): String {
+        val parts = args.split(" ", limit = 2)
+        if (parts.size < 2) return "cp: missing destination\n"
+        val src = File(currentDir, parts[0])
+        val dst = File(currentDir, parts[1])
+        return try { src.copyTo(dst, true); "" } catch (e: Exception) { "cp: failed\n" }
     }
 
     private fun handleTree(dir: File, prefix: String): String {
@@ -91,11 +120,8 @@ class TerminalExec(private val baseDir: File) {
     fun getPromptPath(): String {
         val canonicalBase = baseDir.canonicalFile.absolutePath
         var path = currentDir.canonicalFile.absolutePath
-        if (path == canonicalBase) {
-            path = "~"
-        } else if (path.startsWith("$canonicalBase/")) {
-            path = "~" + path.removePrefix(canonicalBase)
-        }
+        if (path == canonicalBase) path = "~"
+        else if (path.startsWith("$canonicalBase/")) path = "~" + path.removePrefix(canonicalBase)
         return "₹$path "
     }
 }
