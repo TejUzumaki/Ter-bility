@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="terbility_bg">#000000</color>
+    <color name="terbility_text">#FFFFFF</color>
+    <color name="terbility_extras_bg">#111111</color>
+    <color name="terbility_drawer_bg">#111111</color>
+    <color name="terbility_divider">#333333</color>
+</resources>

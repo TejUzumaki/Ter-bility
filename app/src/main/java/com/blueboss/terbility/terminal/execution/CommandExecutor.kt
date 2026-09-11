@@ -1,6 +1,5 @@
-package com.blueboss.terbility
+package com.blueboss.terbility.terminal.execution
 
-import android.content.Context
 import android.os.Build
 import android.os.StatFs
 import java.io.File
@@ -8,14 +7,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class TerminalExec(private val context: Context, private val baseDir: File) {
+class CommandExecutor(private val baseDir: File) {
     var currentDir: File = baseDir
     val history = mutableListOf<String>()
 
     fun execute(command: String): String {
         var trimmedCmd = command.trim()
         if (trimmedCmd.isEmpty()) return ""
-        
         if (trimmedCmd == "cd..") trimmedCmd = "cd .."
         
         history.add(trimmedCmd)
@@ -41,7 +39,6 @@ class TerminalExec(private val context: Context, private val baseDir: File) {
             "whoami" -> "ter-bility-user\n"
             "date" -> SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.getDefault()).format(Date()) + "\n"
             "history" -> getHistory()
-            "neofetch" -> getNeofetch()
             "df" -> getDiskInfo()
             else -> try {
                 val pb = ProcessBuilder("/system/bin/sh", "-c", trimmedCmd)
@@ -78,7 +75,6 @@ class TerminalExec(private val context: Context, private val baseDir: File) {
 │   history       - Show command history                       │
 │   whoami        - Print current user                         │
 │   date          - Print current system date/time             │
-│   neofetch      - Display system information & logo          │
 │   df            - Show disk space information                │
 └──────────────────────────────────────────────────────────────┘
 """.trimIndent() + "\n"
@@ -88,29 +84,6 @@ class TerminalExec(private val context: Context, private val baseDir: File) {
         val sb = StringBuilder()
         history.forEachIndexed { index, cmd -> sb.append("${index + 1}  $cmd\n") }
         return sb.toString()
-    }
-
-    private fun getNeofetch(): String {
-        val model = "${Build.MANUFACTURER} ${Build.MODEL}"
-        val androidVer = Build.VERSION.RELEASE
-        val sdk = Build.VERSION.SDK_INT
-        val arch = Build.SUPPORTED_ABIS[0]
-        
-        return """
-<font color='#FF1493'>████████╗███████╗██████╗░     ██████╗░██╗██╗░░░░░██╗████████╗██╗░░░██╗</font>
-<font color='#FF1493'>╚══██╔══╝██╔════╝██╔══██╗     ██╔══██╗██║██║░░░░░██║╚══██╔══╝╚██╗░██╔╝</font>
-<font color='#FF1493'>░░░██║░░░█████╗░░██████╔╝     ██████╔╝██║██║░░░░░██║░░░██║░░░░╚████╔╝░</font>
-<font color='#FF1493'>░░░██║░░░██╔══╝░░██╔══██╗     ██╔══██╗██║██║░░░░░██║░░░██║░░░░░╚██╔╝░░</font>
-<font color='#FF1493'>░░░██║░░░███████╗██║░░██║     ██████╔╝██║███████╗██║░░░██║░░░░░░██║░░░</font>
-<font color='#FF1493'>░░░╚═╝░░░╚══════╝╚═╝░░╚═╝     ╚═════╝░╚═╝╚══════╝╚═╝░░░╚═╝░░░░░░╚═╝░░░</font>
-
-   <font color='#FFFFFF'>OS:</font> Ter-bility V2.1 (Android $androidVer)
-   <font color='#FFFFFF'>Host:</font> $model
-   <font color='#FFFFFF'>Kernel:</font> 4.x.x (SDK $sdk)
-   <font color='#FFFFFF'>Arch:</font> $arch
-   <font color='#FFFFFF'>Shell:</font> /system/bin/sh
-   <font color='#FFFFFF'>User:</font> ter-bility-user
-""".trimIndent() + "\n"
     }
 
     private fun getDiskInfo(): String {
