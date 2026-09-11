@@ -12,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,6 +34,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
+          cache-disabled: true
           gradle-version: "8.9"
 
       - name: Build APK
@@ -47,6 +50,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.0.${{ github.run_number }}
-          name: Ter-bility v2.0.${{ github.run_number }}
+          tag_name: v2.1.${{ github.run_number }}
+          name: Ter-bility v2.1.${{ github.run_number }}
           files: app/build/outputs/apk/debug/app-debug.apk

@@ -1,6 +1,5 @@
 package com.blueboss.terbility.terminal.execution
 
-import android.os.Build
 import android.os.StatFs
 import java.io.File
 import java.text.SimpleDateFormat
