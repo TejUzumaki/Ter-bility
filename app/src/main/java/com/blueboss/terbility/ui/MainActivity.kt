@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.blueboss.terbility.R
@@ -29,12 +30,21 @@ class MainActivity : AppCompatActivity() {
 
     private var historyIndex = -1
     private var accentColor = "#FF1493"
+    private val history = mutableListOf<String>()
 
     private val sessions = mutableListOf<TerminalSession>()
     private var activeSession = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // STRICT DEFAULT DARK MODE
+        val prefs = getSharedPreferences("TerbilityPrefs", Context.MODE_PRIVATE)
+        if (!prefs.contains("theme_mode")) {
+            prefs.edit().putString("theme_mode", "dark").apply()
+        }
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+
         setContentView(R.layout.activity_main)
 
         drawerLayout = findViewById(R.id.drawer_layout)
@@ -89,13 +99,27 @@ class MainActivity : AppCompatActivity() {
                        "░░░██║░░░███████╗██║░░██║     ██████╔╝██║███████╗██║░░░██║░░░░░░██║░░░<br>" +
                        "░░░╚═╝░░░╚══════╝╚═╝░░╚═╝     ╚═════╝░╚═╝╚══════╝╚═╝░░░╚═╝░░░░░░╚═╝░░░<br>"
         
-        val textColor = if (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES) "#FFFFFF" else "#000000"
+        val textColor = "#FFFFFF" // Dark mode is default
         
         newSession.outputBuffer.append("<font color='$accentColor'>$asciiArt</font><br>")
         newSession.outputBuffer.append("<font color='$textColor'>Welcome to Ter-bility a terminal made for challenge by Arpit Falke</font><br><br>")
 
         sessions.add(newSession)
         activeSession = sessions.size - 1
+        
+        // Start the real background shell
+        newSession.start { output ->
+            runOnUiThread {
+                if (output == "___EXIT___") {
+                    newSession.outputBuffer.append("<font color='#FF0000'>[Process exited]<br></font>")
+                } else {
+                    val escapedOut = output.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+                    newSession.outputBuffer.append("<font color='#FFFFFF'>$escapedOut</font>")
+                }
+                if (activeSession == sessions.indexOf(newSession)) renderTerminal()
+            }
+        }
+        
         refreshSessionList()
         renderTerminal()
     }
@@ -111,7 +135,7 @@ class MainActivity : AppCompatActivity() {
             val btn = Button(this)
             btn.text = "Session ${i + 1}"
             btn.setBackgroundColor(0x00000000)
-            btn.setTextColor(if (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES) Color.WHITE else Color.BLACK)
+            btn.setTextColor(Color.WHITE)
             btn.setOnClickListener {
                 switchToSession(i)
                 drawerLayout.closeDrawer(GravityCompat.START)
@@ -131,19 +155,17 @@ class MainActivity : AppCompatActivity() {
         val command = commandInput.text.toString()
         historyIndex = -1
         
+        if (command.isNotEmpty()) {
+            history.add(command)
+        }
+        
         val escapedCmd = command.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         val prompt = sessions[activeSession].getPromptPath()
-        val textColor = if (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK == android.content.res.Configuration.UI_MODE_NIGHT_YES) "#FFFFFF" else "#000000"
 
-        sessions[activeSession].outputBuffer.append("<font color='$accentColor'>$prompt</font><font color='$textColor'>$escapedCmd</font><br>")
-
-        val output = sessions[activeSession].executeCommand(command)
-        if (output == "___CLEAR___") {
-            sessions[activeSession].outputBuffer.clear()
-        } else if (output.isNotEmpty()) {
-            val escapedOut = output.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
-            sessions[activeSession].outputBuffer.append("<font color='$textColor'>$escapedOut</font>")
-        }
+        sessions[activeSession].outputBuffer.append("<font color='$accentColor'>$prompt</font><font color='#FFFFFF'>$escapedCmd</font><br>")
+        
+        // Send to real shell
+        sessions[activeSession].executeCommand(command)
 
         commandInput.text.clear()
         renderTerminal()
@@ -163,20 +185,22 @@ class MainActivity : AppCompatActivity() {
         buttons.forEach { id ->
             findViewById<Button>(id).setOnClickListener { 
                 when (id) {
-                    R.id.btn_esc -> injectText("")
-                    R.id.btn_tab -> injectText("    ")
+                    R.id.btn_esc -> sessions[activeSession].shell.sendSignal("\u001B") // ESC
+                    R.id.btn_tab -> sessions[activeSession].shell.sendSignal("\t") // TAB
+                    R.id.btn_ctrl -> sessions[activeSession].shell.sendSignal("\u0003") // CTRL+C
+                    R.id.btn_alt -> { /* Alt sequences require complex mapping, left empty for now */ }
                     R.id.btn_up -> {
-                        if (sessions[activeSession].executor.history.isNotEmpty()) {
-                            if (historyIndex == -1) historyIndex = sessions[activeSession].executor.history.size - 1
+                        if (history.isNotEmpty()) {
+                            if (historyIndex == -1) historyIndex = history.size - 1
                             else if (historyIndex > 0) historyIndex--
-                            commandInput.setText(sessions[activeSession].executor.history[historyIndex])
+                            commandInput.setText(history[historyIndex])
                             commandInput.setSelection(commandInput.text.length)
                         }
                     }
                     R.id.btn_down -> {
-                        if (historyIndex != -1 && historyIndex < sessions[activeSession].executor.history.size - 1) {
+                        if (historyIndex != -1 && historyIndex < history.size - 1) {
                             historyIndex++
-                            commandInput.setText(sessions[activeSession].executor.history[historyIndex])
+                            commandInput.setText(history[historyIndex])
                             commandInput.setSelection(commandInput.text.length)
                         } else {
                             historyIndex = -1
