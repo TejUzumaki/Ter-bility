@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.Html
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
@@ -17,21 +18,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var promptText: TextView
     private lateinit var terminalExec: TerminalExec
 
+    private var historyIndex = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        terminalExec = TerminalExec(this, filesDir)
+        terminalExec = TerminalExec(filesDir)
 
         terminalOutput = findViewById(R.id.terminalOutput)
         commandInput = findViewById(R.id.commandInput)
         scrollView = findViewById(R.id.scrollView)
         promptText = findViewById(R.id.promptText)
 
-        printToTerminal("Ter-bility [Version 1.0]\n(c) Blue Boss. All rights reserved.\n\n")
+        printToTerminal("<font color='#FF1493'>Welcome to Ter-bility a terminal made for challenge by Arpit Falke</font><br><br>")
         updatePrompt()
 
-        // Force keyboard to show and focus on the inline input
         commandInput.requestFocus()
         
         commandInput.setOnEditorActionListener { _, actionId, event ->
@@ -43,19 +45,69 @@ class MainActivity : AppCompatActivity() {
                 false
             }
         }
+
+        setupExtraKeys()
+    }
+
+    private fun setupExtraKeys() {
+        val escBtn = findViewById<Button>(R.id.btn_esc)
+        val tabBtn = findViewById<Button>(R.id.btn_tab)
+        val ctrlBtn = findViewById<Button>(R.id.btn_ctrl)
+        val altBtn = findViewById<Button>(R.id.btn_alt)
+        val upBtn = findViewById<Button>(R.id.btn_up)
+        val downBtn = findViewById<Button>(R.id.btn_down)
+        val slashBtn = findViewById<Button>(R.id.btn_slash)
+        val pipeBtn = findViewById<Button>(R.id.btn_pipe)
+
+        escBtn.setOnClickListener { injectText("") } // ESC requires complex handling, leave empty for now
+        tabBtn.setOnClickListener { injectText("    ") } // Simulate tab space
+        ctrlBtn.setOnClickListener { } // Placeholder
+        altBtn.setOnClickListener { } // Placeholder
+        
+        upBtn.setOnClickListener {
+            if (terminalExec.history.isNotEmpty()) {
+                if (historyIndex == -1) historyIndex = terminalExec.history.size - 1
+                else if (historyIndex > 0) historyIndex--
+                commandInput.setText(terminalExec.history[historyIndex])
+                commandInput.setSelection(commandInput.text.length)
+            }
+        }
+
+        downBtn.setOnClickListener {
+            if (historyIndex != -1 && historyIndex < terminalExec.history.size - 1) {
+                historyIndex++
+                commandInput.setText(terminalExec.history[historyIndex])
+                commandInput.setSelection(commandInput.text.length)
+            } else {
+                historyIndex = -1
+                commandInput.text.clear()
+            }
+        }
+
+        slashBtn.setOnClickListener { injectText("/") }
+        pipeBtn.setOnClickListener { injectText("| ") }
+    }
+
+    private fun injectText(text: String) {
+        val start = commandInput.selectionStart
+        val end = commandInput.selectionEnd
+        commandInput.text.replace(start, end, text)
+        commandInput.setSelection(start + text.length)
     }
 
     private fun executeCommand() {
         val command = commandInput.text.toString()
+        historyIndex = -1
         
         val escapedCmd = command.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         val prompt = terminalExec.getPromptPath()
 
-        // Print the executed command into the main terminal buffer
         printToTerminal("<font color='#FF1493'>$prompt</font><font color='#FFFFFF'>$escapedCmd</font><br>")
 
         val output = terminalExec.execute(command)
-        if (output.isNotEmpty()) {
+        if (output == "___CLEAR___") {
+            terminalOutput.text = ""
+        } else if (output.isNotEmpty()) {
             val escapedOut = output.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
             printToTerminal("<font color='#FFFFFF'>$escapedOut</font>")
         }

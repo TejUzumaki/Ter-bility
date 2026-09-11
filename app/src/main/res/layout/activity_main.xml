@@ -1,55 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scrollView"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
-    android:fillViewport="true"
-    android:clickable="true"
-    android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:orientation="vertical"
+    android:background="#000000">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
-
-        <TextView
-            android:id="@+id/terminalOutput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="12dp">
 
             <TextView
-                android:id="@+id/promptText"
-                android:layout_width="wrap_content"
+                android:id="@+id/terminalOutput"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#FF1493"
-                android:fontFamily="monospace"
-                android:textSize="14sp" />
-
-            <EditText
-                android:id="@+id/commandInput"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@null"
                 android:fontFamily="monospace"
                 android:textColor="#FFFFFF"
-                android:inputType="text"
-                android:imeOptions="actionDone"
-                android:singleLine="true"
-                android:textSize="14sp"
-                android:textCursorDrawable="@drawable/cursor_white"
-                android:cursorVisible="true" />
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/promptText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FF1493"
+                    android:fontFamily="monospace"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/commandInput"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:fontFamily="monospace"
+                    android:textColor="#FFFFFF"
+                    android:inputType="text"
+                    android:imeOptions="actionDone"
+                    android:singleLine="true"
+                    android:textSize="14sp"
+                    android:textCursorDrawable="@drawable/cursor_white"
+                    android:cursorVisible="true" />
+            </LinearLayout>
         </LinearLayout>
+    </ScrollView>
+
+    <!-- Extra Keys Bar like Termux -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#111111"
+        android:padding="4dp">
+
+        <Button
+            android:id="@+id/btn_esc"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="ESC"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_tab"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="TAB"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_ctrl"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="CTRL"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_alt"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="ALT"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_up"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="-"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_down"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="="
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_slash"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="/"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btn_pipe"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="|"
+            android:textColor="#FFFFFF"
+            android:background="@android:color/transparent"
+            android:textSize="16sp" />
     </LinearLayout>
-</ScrollView>
+</LinearLayout>
