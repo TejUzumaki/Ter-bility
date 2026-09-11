@@ -4,7 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
 import android.text.Html
+import android.text.TextWatcher
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
@@ -65,6 +68,15 @@ class MainActivity : AppCompatActivity() {
             } else false
         }
 
+        // Auto-scroll when user types long commands
+        commandInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
+            }
+        })
+
         setupExtraKeys()
     }
 
@@ -73,13 +85,11 @@ class MainActivity : AppCompatActivity() {
         accentColor = prefs.getString("accent_color", "#FF1493") ?: "#FF1493"
         isDarkMode = prefs.getString("theme_mode", "dark") == "dark"
 
-        // Apply Theme Colors
         if (isDarkMode) {
             mainLayout.setBackgroundColor(Color.BLACK)
             terminalOutput.setTextColor(Color.WHITE)
             commandInput.setTextColor(Color.WHITE)
             extraKeysBar.setBackgroundColor(Color.parseColor("#111111"))
-            // Custom pink highlight for text selection
             terminalOutput.highlightColor = Color.parseColor("#55FF1493")
         } else {
             mainLayout.setBackgroundColor(Color.WHITE)
@@ -114,9 +124,6 @@ class MainActivity : AppCompatActivity() {
                        "░░░╚═╝░░░╚══════╝╚═╝░░╚═╝     ╚═════╝░╚═╝╚══════╝╚═╝░░░╚═╝░░░░░░╚═╝░░░<br>"
         
         val textColor = if (isDarkMode) "#FFFFFF" else "#000000"
-        val bgColor = if (isDarkMode) "#000000" else "#FFFFFF"
-        
-        newOutput.append("<font color='$bgColor'>$asciiArt</font>") // Hack to keep spacing intact
         newOutput.append("<font color='$accentColor'>$asciiArt</font><br>")
         newOutput.append("<font color='$textColor'>Welcome to Ter-bility a terminal made for challenge by Arpit Falke</font><br><br>")
 
@@ -154,6 +161,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executeCommand() {
+        // Haptic feedback on enter
+        commandInput.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        
         val command = commandInput.text.toString()
         historyIndex = -1
         
@@ -176,43 +186,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupExtraKeys() {
-        findViewById<Button>(R.id.btn_esc).setOnClickListener { injectText("") }
-        findViewById<Button>(R.id.btn_tab).setOnClickListener { injectText("    ") }
-        findViewById<Button>(R.id.btn_ctrl).setOnClickListener { 
-            // CTRL logic placeholder: usually sends signal to process. 
-            // Since we use ProcessBuilder per command, this mainly affects text editing.
-        }
-        findViewById<Button>(R.id.btn_alt).setOnClickListener { }
-        findViewById<Button>(R.id.btn_up).setOnClickListener {
-            if (terminalExec.history.isNotEmpty()) {
-                if (historyIndex == -1) historyIndex = terminalExec.history.size - 1
-                else if (historyIndex > 0) historyIndex--
-                commandInput.setText(terminalExec.history[historyIndex])
-                commandInput.setSelection(commandInput.text.length)
+        val buttons = listOf(
+            R.id.btn_esc, R.id.btn_tab, R.id.btn_ctrl, R.id.btn_alt, 
+            R.id.btn_up, R.id.btn_down, R.id.btn_left, R.id.btn_right, 
+            R.id.btn_home, R.id.btn_end, R.id.btn_slash, R.id.btn_pipe
+        )
+        
+        buttons.forEach { id ->
+            findViewById<Button>(id).setOnClickListener { 
+                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                when (id) {
+                    R.id.btn_esc -> injectText("")
+                    R.id.btn_tab -> injectText("    ")
+                    R.id.btn_up -> {
+                        if (terminalExec.history.isNotEmpty()) {
+                            if (historyIndex == -1) historyIndex = terminalExec.history.size - 1
+                            else if (historyIndex > 0) historyIndex--
+                            commandInput.setText(terminalExec.history[historyIndex])
+                            commandInput.setSelection(commandInput.text.length)
+                        }
+                    }
+                    R.id.btn_down -> {
+                        if (historyIndex != -1 && historyIndex < terminalExec.history.size - 1) {
+                            historyIndex++
+                            commandInput.setText(terminalExec.history[historyIndex])
+                            commandInput.setSelection(commandInput.text.length)
+                        } else {
+                            historyIndex = -1
+                            commandInput.text.clear()
+                        }
+                    }
+                    R.id.btn_left -> {
+                        val pos = commandInput.selectionStart
+                        if (pos > 0) commandInput.setSelection(pos - 1)
+                    }
+                    R.id.btn_right -> {
+                        val pos = commandInput.selectionStart
+                        if (pos < commandInput.text.length) commandInput.setSelection(pos + 1)
+                    }
+                    R.id.btn_home -> commandInput.setSelection(0)
+                    R.id.btn_end -> commandInput.setSelection(commandInput.text.length)
+                    R.id.btn_slash -> injectText("/")
+                    R.id.btn_pipe -> injectText("| ")
+                }
             }
         }
-        findViewById<Button>(R.id.btn_down).setOnClickListener {
-            if (historyIndex != -1 && historyIndex < terminalExec.history.size - 1) {
-                historyIndex++
-                commandInput.setText(terminalExec.history[historyIndex])
-                commandInput.setSelection(commandInput.text.length)
-            } else {
-                historyIndex = -1
-                commandInput.text.clear()
-            }
-        }
-        findViewById<Button>(R.id.btn_left).setOnClickListener {
-            val pos = commandInput.selectionStart
-            if (pos > 0) commandInput.setSelection(pos - 1)
-        }
-        findViewById<Button>(R.id.btn_right).setOnClickListener {
-            val pos = commandInput.selectionStart
-            if (pos < commandInput.text.length) commandInput.setSelection(pos + 1)
-        }
-        findViewById<Button>(R.id.btn_home).setOnClickListener { commandInput.setSelection(0) }
-        findViewById<Button>(R.id.btn_end).setOnClickListener { commandInput.setSelection(commandInput.text.length) }
-        findViewById<Button>(R.id.btn_slash).setOnClickListener { injectText("/") }
-        findViewById<Button>(R.id.btn_pipe).setOnClickListener { injectText("| ") }
     }
 
     private fun injectText(text: String) {
