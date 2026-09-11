@@ -1,9 +1,11 @@
 package com.blueboss.terbility
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.Html
+import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
@@ -13,7 +15,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var terminalOutput: TextView
     private lateinit var commandInput: EditText
-    private lateinit var sendButton: Button
     private lateinit var scrollView: ScrollView
     private lateinit var terminalExec: TerminalExec
 
@@ -21,23 +22,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize context-dependent fields here to prevent crash
         terminalExec = TerminalExec(filesDir)
 
         terminalOutput = findViewById(R.id.terminalOutput)
         commandInput = findViewById(R.id.commandInput)
-        sendButton = findViewById(R.id.sendButton)
         scrollView = findViewById(R.id.scrollView)
 
-        printToTerminal("Ter-bility [Version 1.0]\n(c) Blue Boss. All rights reserved.\n")
-        printToTerminal("Working directory: ${filesDir.absolutePath}\n\n")
+        printToTerminal("Ter-bility [Version 1.0]\n(c) Blue Boss. All rights reserved.\n\n")
+        updatePrompt()
 
-        sendButton.setOnClickListener {
-            executeCommand()
-        }
-
+        // Listen for Enter key to execute command
         commandInput.setOnEditorActionListener { _, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_SEND || 
+            if (actionId == EditorInfo.IME_ACTION_DONE || 
                 (event != null && event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_ENTER)) {
                 executeCommand()
                 true
@@ -48,17 +44,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executeCommand() {
-        val command = commandInput.text.toString().trim()
-        if (command.isEmpty()) return
+        val command = commandInput.text.toString()
+        
+        // Escape HTML to prevent parsing errors with symbols like < or >
+        val escapedCmd = command.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        val prompt = terminalExec.getPromptPath()
 
-        printToTerminal("user@ter-bility:~\$ $command\n")
+        // Print the user's command in white, prompt in pink
+        printToTerminal("<font color='#FF1493'>$prompt</font><font color='#FFFFFF'>$escapedCmd</font><br>")
+
+        // Execute and print output
         val output = terminalExec.execute(command)
-        printToTerminal(output)
+        if (output.isNotEmpty()) {
+            val escapedOut = output.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+            printToTerminal("<font color='#FFFFFF'>$escapedOut</font>")
+        }
+
         commandInput.text.clear()
+        updatePrompt()
     }
 
-    private fun printToTerminal(text: String) {
-        terminalOutput.append(text)
+    private fun updatePrompt() {
+        // Place the pink prompt directly next to where the user types
+        commandInput.hint = ""
+        commandInput.setHint(Html.fromHtml("<font color='#FF1493'>" + terminalExec.getPromptPath() + "</font>", Html.FROM_HTML_MODE_COMPACT))
+    }
+
+    private fun printToTerminal(html: String) {
+        terminalOutput.append(Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT))
         scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 }
