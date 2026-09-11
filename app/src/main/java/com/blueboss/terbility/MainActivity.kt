@@ -14,7 +14,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var commandInput: EditText
     private lateinit var sendButton: Button
     private lateinit var scrollView: ScrollView
-    private val terminalExec = TerminalExec()
+    
+    // Pass the app's private files directory to our execution engine
+    private val terminalExec = TerminalExec(filesDir)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,8 +27,9 @@ class MainActivity : AppCompatActivity() {
         sendButton = findViewById(R.id.sendButton)
         scrollView = findViewById(R.id.scrollView)
 
-        // Welcome message
-        printToTerminal("Ter-bility [Version 1.0]\n(c) Blue Boss. All rights reserved.\n\n")
+        // Welcome message showing the actual working directory
+        printToTerminal("Ter-bility [Version 1.0]\n(c) Blue Boss. All rights reserved.\n")
+        printToTerminal("Working directory: ${filesDir.absolutePath}\n\n")
 
         sendButton.setOnClickListener {
             executeCommand()
